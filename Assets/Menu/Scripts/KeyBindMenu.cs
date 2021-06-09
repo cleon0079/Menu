@@ -7,11 +7,11 @@ public class KeyBindMenu : MonoBehaviour
 {
     public static Dictionary<string, KeyCode> keys = new Dictionary<string, KeyCode>();
 
-    public Text up, down, left, right, jump;
+    [SerializeField] Text up, down, left, right, jump;
 
     private GameObject currentKey;
-    public Color32 changedKey = new Color32(39, 171, 249, 255);//blue
-    public Color32 selectedKey = new Color32(239, 116, 36, 255);//orange
+    [SerializeField] Color32 changedKey = new Color32(39, 171, 249, 255);//blue
+    [SerializeField] Color32 selectedKey = new Color32(239, 116, 36, 255);//orange
 
     // Start is called before the first frame update
     void Start()

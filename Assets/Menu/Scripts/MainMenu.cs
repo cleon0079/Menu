@@ -6,8 +6,8 @@ using System.Collections;
 
 public class MainMenu : MonoBehaviour
 {
-    public Image progressBar;
-    public Text progressBarText;
+    [SerializeField] Image progressBar;
+    [SerializeField] Text progressBarText;
 
     public void StartGame(int _sceneIndex)
     {

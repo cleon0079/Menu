@@ -6,13 +6,13 @@ using UnityEngine.Audio;
 
 public class OptionsMenu : MonoBehaviour
 {
-    public Slider musicSlider;
-    public Slider sfxSlider;
-    public AudioMixer mixer;
-    public Dropdown qualityDropdown;
-    public Toggle fullscreenToggle;
-    public Dropdown resolusion;
-    public Resolution[] resolutions;
+    [SerializeField] Slider musicSlider;
+    [SerializeField] Slider sfxSlider;
+    [SerializeField] AudioMixer mixer;
+    [SerializeField] Dropdown qualityDropdown;
+    [SerializeField] Toggle fullscreenToggle;
+    [SerializeField] Dropdown resolusion;
+    [SerializeField] Resolution[] resolutions;
 
     private void Awake()
     {
