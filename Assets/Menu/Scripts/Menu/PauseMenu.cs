@@ -11,12 +11,15 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] GameObject pauseMenu;
     bool isPause = false;
 
+    [SerializeField] GameObject gamePlayUI;
     [SerializeField] Text playerNameText;
     [SerializeField] InputField inputField;
 
     private void Start()
     {
         LoadGame();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -28,16 +31,24 @@ public class PauseMenu : MonoBehaviour
         }
     }
 
-    public void PauseGame(bool _ispause)
+    public void PauseGame(bool _isPause)
     {
         // Convert the ispause bool to a int
         // Because if ispause is ture it will return 1 else return 0
-        float timeScale = System.Convert.ToInt32(_ispause);
+        float timeScale = System.Convert.ToInt32(_isPause);
         // Start and pause the game time
         Time.timeScale = timeScale;
+        // Open and close the gameplay UI
+        gamePlayUI.SetActive(_isPause);
         // Open and close the pause menu
-        pauseMenu.SetActive(!_ispause);
-        isPause = !_ispause;
+        pauseMenu.SetActive(!_isPause);
+        // Show or lock the cursor
+        if (!_isPause)
+            Cursor.lockState = CursorLockMode.None;
+        else
+            Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = !_isPause;
+        isPause = !_isPause;
     }
 
     public void QuitGame()
