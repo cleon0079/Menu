@@ -14,13 +14,9 @@ namespace cleon
         [SerializeField] Text progressBarText;
 
         [SerializeField] GameObject pauseMenu;
-        [SerializeField] GameObject gamePlayUI;
-        [SerializeField] GameObject customisationUI;
-        [SerializeField] GameObject playerStatsGO;
         [SerializeField] GameObject playerGO;
-        Player player;
-        Customisation customisation;
-        public bool isPause = false;
+        [HideInInspector] public bool isOpen = false;
+        GameManager gameManager;
 
         [SerializeField] Text playerNameText;
         [SerializeField] InputField inputField;
@@ -29,8 +25,7 @@ namespace cleon
 
         private void Start()
         {
-            customisation = customisationUI.GetComponent<Customisation>();
-            player = playerStatsGO.GetComponent<Player>();
+            gameManager = FindObjectOfType<GameManager>();
             if (!Directory.Exists(Application.streamingAssetsPath))
                 Directory.CreateDirectory(Application.streamingAssetsPath);
             LoadGame();
@@ -39,30 +34,19 @@ namespace cleon
         private void Update()
         {
             // If we press ESC then run pause game function
-            if (Input.GetKeyDown(KeyCode.Escape) && customisation.isChanging == false && player.isChanging == false)
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                PauseGame(isPause);
+                if (!gameManager.isOpen)
+                {
+                    pauseMenu.SetActive(true);
+                    isOpen = true;
+                }
+                else if (isOpen)
+                {
+                    pauseMenu.SetActive(false);
+                    isOpen = false;
+                }
             }
-        }
-
-        public void PauseGame(bool _isPause)
-        {
-            // Convert the ispause bool to a int
-            // Because if ispause is ture it will return 1 else return 0
-            float timeScale = System.Convert.ToInt32(_isPause);
-            // Start and pause the game time
-            Time.timeScale = timeScale;
-            // Open and close the gameplay UI
-            gamePlayUI.SetActive(_isPause);
-            // Open and close the pause menu
-            pauseMenu.SetActive(!_isPause);
-            // Show or lock the cursor
-            if (!_isPause)
-                Cursor.lockState = CursorLockMode.None;
-            else
-                Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = !_isPause;
-            isPause = !_isPause;
         }
 
         public void QuitGame()
@@ -83,11 +67,12 @@ namespace cleon
                 PlayerPrefs.SetString("PlayerName", playerNameText.text);
                 PlayerPrefs.Save();
             }
-            SaveBinary(player);
+            SaveBinary(gameManager.player);
         }
 
         void SaveBinary(Player _player)
         {
+            // Get the data from playerdata
             PlayerData playerData = new PlayerData(_player);
             // This opens the 'River' between the RAM and the file
             using (FileStream stream = new FileStream(FilePath + ".save", FileMode.OpenOrCreate))
@@ -115,6 +100,7 @@ namespace cleon
                 // Transports the data from the specified file to the RAM, like unfreezing ice
                 // into water.
                 PlayerData playerData = formatter.Deserialize(stream) as PlayerData;
+                // Load the data and then reset the player POS and ROT
                 playerData.LoadPlayerData(_player);
                 playerGO.transform.position = _player.playerPos;
                 playerGO.transform.rotation = _player.playerRot;
@@ -129,7 +115,7 @@ namespace cleon
             {
                 playerNameText.text = PlayerPrefs.GetString("PlayerName");
             }
-            LoadBinary(player);
+            LoadBinary(gameManager.player);
         }
 
         public void BackToMainMenu(int _sceneIndex)

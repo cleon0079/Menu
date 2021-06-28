@@ -9,38 +9,37 @@ namespace cleon
     {
         [Header("Setup")]
         [SerializeField] GameObject playerStatsUI;
-        [SerializeField] GameObject gamePlayUI;
-        [SerializeField] GameObject customisationGO;
-        [SerializeField] GameObject pauseMenuGO;
         [SerializeField] GameObject mainCamera;
         [SerializeField] GameObject customisationCamera;
         [SerializeField] GameObject player;
-        public Vector3 playerPos;
-        public Quaternion playerRot;
-        Customisation customisation;
-        PauseMenu pauseMenu;
-        public bool isChanging = false;
-        public PlayerData playerData = new PlayerData();
+        [HideInInspector] public bool isOpen = false;
+        [HideInInspector] public PlayerData playerData = new PlayerData();
 
-        public int level;
-        public int currentExp;
+        Equipment equipment;
+        GameManager gameManager;
+
+        [HideInInspector] public Vector3 playerPos;
+        [HideInInspector] public Quaternion playerRot;
+
+        [HideInInspector] public int level;
+        [HideInInspector] public int currentExp;
         int maxExp;
-        public int pointPool;
+        [HideInInspector] public int pointPool;
         int currentPoint;
 
-        public bool isHuman;
-        public bool isOrc;
-        public bool isElves;
-        public bool isKnight;
-        public bool isWizard;
-        public bool isRogue;
+        [HideInInspector] public bool isHuman;
+        [HideInInspector] public bool isOrc;
+        [HideInInspector] public bool isElves;
+        [HideInInspector] public bool isKnight;
+        [HideInInspector] public bool isWizard;
+        [HideInInspector] public bool isRogue;
 
-        public int strength;
-        public int agility;
-        public int physique;
-        public int intelligence;
-        public int perceive;
-        public int fascination;
+        [HideInInspector] public int strength;
+        [HideInInspector] public int agility;
+        [HideInInspector] public int physique;
+        [HideInInspector] public int intelligence;
+        [HideInInspector] public int perceive;
+        [HideInInspector] public int fascination;
 
         int currentStrength;
         int currentAgility;
@@ -51,18 +50,18 @@ namespace cleon
 
         int attack;
         int defence;
-        int walkSpeed;
+        [HideInInspector] public int walkSpeed;
         int health;
         int mana;
         int stamina;
 
-        public int currentHealth;
-        public int currentMana;
-        public int currentStamina;
+        [HideInInspector] public int currentHealth;
+        [HideInInspector] public int currentMana;
+        [HideInInspector] public int currentStamina;
 
         int hit;
         int toughness;
-        int jumpspeed;
+        [HideInInspector] public int jumpspeed;
         int healthRegen;
         int manaRegen;
         int staminaRegen;
@@ -103,28 +102,60 @@ namespace cleon
         private void Start()
         {
             SetDefault();
-            pauseMenu = pauseMenuGO.GetComponent<PauseMenu>();
-            customisation = customisationGO.GetComponent<Customisation>();
+            equipment = FindObjectOfType<Equipment>();
+            gameManager = FindObjectOfType<GameManager>();
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.C) && pauseMenu.isPause == false && customisation.isChanging == false)
+            // If we press C and not opening any menu then open playerstat menu
+            if (Input.GetKeyDown(KeyCode.C))
             {
-                Change(isChanging);
+                if(!gameManager.isOpen)
+                {
+                    playerStatsUI.SetActive(true);
+                    // Use the customisation camera to look at the player and disable the main camera
+                    mainCamera.SetActive(false);
+                    customisationCamera.SetActive(true);
+                    // Set the default when we open the menu
+                    SetDefaultPoint();
+                    isOpen = true;
+                }
+                else if(isOpen)
+                {
+                    playerStatsUI.SetActive(false);
+                    // Set the main camera back then we close the menu
+                    mainCamera.SetActive(true);
+                    customisationCamera.SetActive(false);
+                    isOpen = false;
+                }
             }
 
+            // Set the text for race and pro
             SetRaceAndPro();
 
+            // Save the pos and rot
             playerPos = player.transform.position;
             playerRot = player.transform.rotation;
 
+            // Point Check
             if(currentPoint > pointPool)
             {
                 currentPoint = pointPool;
             }
 
+            // Timer and get exp and health and mana and stamina per sec
             timer -= Time.deltaTime;
+            if (timer <= 0)
+            {
+                GetCurrentHealth();
+                GetCurrentMana();
+                GetCurrentStamina();
+                currentExp += 1;
+                timer = 1;
+            }
+
+            // Level up
             if (currentExp >= maxExp)
             {
                 level++;
@@ -133,14 +164,7 @@ namespace cleon
                 currentExp -= maxExp;
                 maxExp *= 2;
             }
-            if (timer <= 0)
-            {
-                GetCurrentHealth();
-                GetCurrentMana();
-                GetCurrentStamina();
-                currentExp += 10;
-                timer = 1;
-            }
+
 
             attack = GetAttack();
             defence = GetDefence();
@@ -161,6 +185,7 @@ namespace cleon
 
         void SetDefault()
         {
+            // Set all the default setting
             timer = 1f;
             currentHealth = 50;
             currentMana = 50;
@@ -177,6 +202,7 @@ namespace cleon
 
         void SetDefaultPoint()
         {
+            // Everytime we make a change with race and pro then update this
             currentStrength = strength;
             currentAgility = agility;
             currentPhysique = physique;
@@ -187,6 +213,7 @@ namespace cleon
 
         public void ConfirmChange()
         {
+            // Confirm the change and save it
             currentStrength = strength;
             currentAgility = agility;
             currentPhysique = physique;
@@ -198,6 +225,7 @@ namespace cleon
 
         public void StrengthChange(bool _dir)
         {
+            // We set the Bool on the GUI button and true is right false is left
             if (currentPoint > 0)
             {
                 if (_dir)
@@ -215,6 +243,7 @@ namespace cleon
                 }
             }
 
+            // If currentpoint is 0 and we have not comfirm
             if (currentPoint == 0 && _dir == false && currentStrength < strength)
             {
                 strength--;
@@ -224,6 +253,7 @@ namespace cleon
 
         public void AgilityChange(bool _dir)
         {
+            // Same as Strength
             if (currentPoint > 0)
             {
                 if (_dir)
@@ -250,6 +280,7 @@ namespace cleon
 
         public void PhysiqueChange(bool _dir)
         {
+            // Same as Strength
             if (currentPoint > 0)
             {
                 if (_dir)
@@ -276,6 +307,7 @@ namespace cleon
 
         public void IntelligenceChange(bool _dir)
         {
+            // Same as Strength
             if (currentPoint > 0)
             {
                 if (_dir)
@@ -302,6 +334,7 @@ namespace cleon
 
         public void PerceiveChange(bool _dir)
         {
+            // Same as Strength
             if (currentPoint > 0)
             {
                 if (_dir)
@@ -328,6 +361,7 @@ namespace cleon
 
         public void FascinationChange(bool _dir)
         {
+            // Same as Strength
             if (currentPoint > 0)
             {
                 if (_dir)
@@ -352,46 +386,20 @@ namespace cleon
             }
         }
 
-        public void Change(bool _isChanging)
-        {
-            // Convert the ispause bool to a int
-            // Because if ispause is ture it will return 1 else return 0
-            float timeScale = System.Convert.ToInt32(_isChanging);
-            // Start and pause the game time
-            Time.timeScale = timeScale;
-            // Open and close the gameplay UI
-            gamePlayUI.SetActive(_isChanging);
-            // Open and close the pause menu
-            playerStatsUI.SetActive(!_isChanging);
-            mainCamera.SetActive(_isChanging);
-            customisationCamera.SetActive(!_isChanging);
-            // Show or lock the cursor
-            if (!_isChanging)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                SetDefaultPoint();
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-            }
-            Cursor.visible = !_isChanging;
-            isChanging = !_isChanging;
-        }
-
         void UpdateText()
         {
+            // Update all the text in run time
             stat1.text = "Attack: " + attack.ToString() + "\nDefence: " + defence.ToString() + "\nWalkSpeed: " + walkSpeed.ToString()
         + "\nHealth: " + health.ToString() + "\nMana: " + mana.ToString() + "\nStamina: " + stamina.ToString();
             stat2.text = "Hit: " + hit.ToString() + "\nToughness: " + toughness.ToString() + "\nJumpSpeed: " + jumpspeed.ToString()
         + "\nHealthRegen: " + healthRegen.ToString() + "/s" + "\nManaRegen: " + manaRegen.ToString() + "/s" + "\nStaminaRegen: " + staminaRegen.ToString() + "/s";
 
             strengthText.text = "Strength: " + strength.ToString();
-            agilityText.text = "Strength: " + agility.ToString();
-            physiqueText.text = "Strength: " + physique.ToString();
-            intelligenceText.text = "Strength: " + intelligence.ToString();
-            perceiveText.text = "Strength: " + perceive.ToString();
-            fascinationText.text = "Strength: " + fascination.ToString();
+            agilityText.text = "Agility: " + agility.ToString();
+            physiqueText.text = "Physique: " + physique.ToString();
+            intelligenceText.text = "Intelligence: " + intelligence.ToString();
+            perceiveText.text = "Perceive: " + perceive.ToString();
+            fascinationText.text = "Fascination: " + fascination.ToString();
 
             levelText.text = "Level: " + level.ToString();
             expText.text = "EXP: " + currentExp.ToString() + "/" + maxExp.ToString();
@@ -400,37 +408,43 @@ namespace cleon
 
         void GetCurrentHealth()
         {
+            // Heal and show the current health in UI
             if (currentHealth <= health)
             {
                 currentHealth += healthRegen;
                 healthBar.value = (float)currentHealth / (float)health;
-                currentHealthText.text = "Health: " + Mathf.RoundToInt((float)currentHealth / (float)health * 100).ToString() + "%";
+                currentHealthText.text = "Health: (" + currentHealth + "/" + health + ")";
             }
         }
 
         void GetCurrentMana()
         {
+            // Heal and show the current mana in UI
             if (currentMana <= mana)
             {
                 currentMana += manaRegen;
                 manaBar.value = (float)currentMana / (float)mana;
-                currentManaText.text = "Mana: " + Mathf.RoundToInt((float)currentMana / (float)mana * 100).ToString() + "%";
+                currentManaText.text = "Mana: (" + currentMana + "/" + mana + ")";
             }
         }
 
         void GetCurrentStamina()
         {
+            // Heal and show the current stamina in UI
             if (currentStamina <= stamina)
             {
                 currentStamina += staminaRegen;
                 staminaBar.value = (float)currentStamina / (float)stamina;
-                currentStaminaText.text = "Stamina: " + Mathf.RoundToInt((float)currentStamina / (float)stamina * 100).ToString() + "%";
+                currentStaminaText.text = "Stamina: (" + currentStamina + "/" + stamina + ")";
             }
         }
 
         int GetAttack()
         {
-            int attack = 10 + strength * 2 + agility;
+            // If we have equipeditem then add to attack
+            int attack = 10 + strength * 2 + agility + 
+                ((equipment.rightHand.EquipedItem != null) ? equipment.rightHand.EquipedItem.Damage : 0) +
+                ((equipment.leftHand.EquipedItem != null) ? equipment.leftHand.EquipedItem.Damage : 0);
             if (isOrc)
                 attack *= 2;
             return attack;
@@ -438,7 +452,10 @@ namespace cleon
 
         int GetDefence()
         {
-            int defence = 5 + physique * 2 + strength;
+            // If we have equipeditem then add to defence
+            int defence = 5 + physique * 2 + strength + 
+                ((equipment.helmet.EquipedItem != null) ? equipment.helmet.EquipedItem.Damage : 0) +
+                ((equipment.bag.EquipedItem != null) ? equipment.bag.EquipedItem.Damage : 0);
             if (isKnight)
                 defence *= 2;
             return defence;
@@ -446,9 +463,9 @@ namespace cleon
 
         int GetWalkSpeed()
         {
-            int walkSpeed = agility;
+            int walkSpeed = 5 + Mathf.RoundToInt(agility/50);
             if (isRogue)
-                walkSpeed += 5;
+                walkSpeed += 3;
             return walkSpeed;
         }
 
@@ -490,9 +507,9 @@ namespace cleon
 
         int GetJumpSpeed()
         {
-            int jumpSpeed = agility;
+            int jumpSpeed = 5 + Mathf.RoundToInt(agility / 50);
             if (isRogue)
-                jumpSpeed += 5;
+                jumpSpeed += 3;
             return jumpSpeed;
         }
 
@@ -518,6 +535,7 @@ namespace cleon
 
         void SetRaceAndPro()
         {
+            // If we set a race or pro then bold the text and change the color and change the text
             if (isHuman)
             {
                 humanText.color = Color.red;
@@ -564,6 +582,7 @@ namespace cleon
 
         public void Human()
         {
+            // Set the default to the player
             if (isElves)
             {
                 strength -= playerData.elves.strength + level;
@@ -602,6 +621,7 @@ namespace cleon
 
         public void Orc()
         {
+            // Set the default to the player
             if (isElves)
             {
                 strength -= playerData.elves.strength + level;
@@ -640,6 +660,7 @@ namespace cleon
 
         public void Elves()
         {
+            // Set the default to the player
             if (isOrc)
             {
                 strength -= playerData.orc.strength + level * 2;
@@ -678,6 +699,7 @@ namespace cleon
 
         public void Knight()
         {
+            // Set the default to the player
             if (isRogue)
             {
                 strength -= playerData.rogue.strength;
@@ -716,6 +738,7 @@ namespace cleon
 
         public void Rogue()
         {
+            // Set the default to the player
             if (isKnight)
             {
                 strength -= playerData.knight.strength;
@@ -754,6 +777,7 @@ namespace cleon
 
         public void Wizard()
         {
+            // Set the default to the player
             if (isKnight)
             {
                 strength -= playerData.knight.strength;

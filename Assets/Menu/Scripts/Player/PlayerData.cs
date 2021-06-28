@@ -7,7 +7,9 @@ namespace cleon
     [System.Serializable]
     public class PlayerData
     {
+        // To save the vector3 value
         public float[] position = new float[3];
+        // To save the quaternion value
         public float[] rotation = new float[4];
         public Vector3 Position => new Vector3(position[0], position[1], position[2]);
         public Quaternion Rotation => new Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
@@ -31,6 +33,13 @@ namespace cleon
         public int currentMana;
         public int currentStamina;
 
+        public int currentArmourTexture;
+        public int currentClothesTexture;
+        public int currentEyesTexture;
+        public int currentHairTexture;
+        public int currentMouthTexture;
+        public int currentSkinTexture;
+
         public PlayerStats human;
         public PlayerStats orc;
         public PlayerStats elves;
@@ -40,6 +49,7 @@ namespace cleon
 
         public PlayerData()
         {
+            // To get the default value
             knight = new PlayerStats(15, 10, 15, 10, 10, 10);
             wizard = new PlayerStats(10, 10, 10, 15, 15, 10);
             rogue = new PlayerStats(10, 15, 10, 10, 15, 10);
@@ -48,8 +58,31 @@ namespace cleon
             elves = new PlayerStats(5, 10, 5, 5, 5, 10);
         }
 
+        public PlayerData(Customisation _customisation)
+        {
+            // Save the change me make to here
+            currentArmourTexture = _customisation.currentArmourTexture;
+            currentClothesTexture = _customisation.currentClothesTexture;
+            currentEyesTexture = _customisation.currentEyesTexture;
+            currentHairTexture = _customisation.currentHairTexture;
+            currentMouthTexture = _customisation.currentMouthTexture;
+            currentSkinTexture = _customisation.currentSkinTexture;
+        }
+
+        public void LoadPlayerCustom(Customisation _customisation)
+        {
+            // Load the change from binay
+            _customisation.currentArmourTexture = currentArmourTexture;
+            _customisation.currentClothesTexture = currentClothesTexture;
+            _customisation.currentEyesTexture = currentEyesTexture;
+            _customisation.currentHairTexture = currentHairTexture;
+            _customisation.currentMouthTexture = currentMouthTexture;
+            _customisation.currentSkinTexture = currentSkinTexture;
+        }
+
         public PlayerData(Player _player)
         {
+            // Save the game data here
             level = _player.level;
             point = _player.pointPool;
             exp = _player.currentExp;
@@ -81,6 +114,7 @@ namespace cleon
 
         public void LoadPlayerData(Player _player)
         {
+            // Load the game data
             _player.level = level;
             _player.pointPool = point;
             _player.currentExp = exp;
