@@ -35,8 +35,9 @@ namespace cleon
         new CapsuleCollider collider;
         new Rigidbody rigidbody;
         Animator anim;
-        Player player;
-        QuestManager questManager;
+        GameManager gameManager;
+
+        float timer = 1;
 
         // The current rotation of the camera that gets update every
         // time the input is changer.
@@ -47,9 +48,8 @@ namespace cleon
         // Start is called before the first frame update
         void Start()
         {
-            player = FindObjectOfType<Player>();
             anim = gameObject.GetComponentInChildren<Animator>();
-            questManager = FindObjectOfType<QuestManager>();
+            gameManager = FindObjectOfType<GameManager>();
             collider = gameObject.GetComponent<CapsuleCollider>();
             rigidbody = gameObject.GetComponent<Rigidbody>();
             rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
@@ -66,10 +66,6 @@ namespace cleon
             crouchAction.action.canceled += (_context) => isCrouching = false;
 
             sprintAction.action.GetBindingDisplayString(0, out string device, out string key);
-            Debug.Log($"Sprint is mapped to <{device}>/{key}");
-
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
 
         // Update is called once per frame
@@ -93,6 +89,16 @@ namespace cleon
             UpdateMovement();
             transform.position += movement;
             movement = Vector3.zero;
+
+            if (isSprinting)
+            {
+                timer -= Time.deltaTime;
+                if(timer <= 0)
+                {
+                    gameManager.player.currentStamina -= 10;
+                    timer = 1;
+                }               
+            }
         }
 
         void OnJumpPerformed(InputAction.CallbackContext _context)
@@ -102,9 +108,10 @@ namespace cleon
             // If we press the button and is on the ground then jump
             if (value && isGrounded)
             {
-                rigidbody.velocity = new Vector3(0, player.jumpspeed, 0);
+                rigidbody.velocity = new Vector3(0, gameManager.player.jumpspeed, 0);
                 isGrounded = false;
-                foreach (Quest quest in questManager.CurrentQuests)
+                gameManager.sFXMusicManager.PlayJumpMusic();
+                foreach (Quest quest in gameManager.questManager.CurrentQuests)
                 {
                     if (quest.questState == questState.Accepted)
                     {
@@ -146,7 +153,7 @@ namespace cleon
         void UpdateMovement()
         {
             // If we press the sprint key then use the sprint speed or crouch or walk
-            float speed = player.walkSpeed *
+            float speed = gameManager.player.walkSpeed *
                 (isSprinting ? sprintSpeedModifier :
                 isCrouching ? crouchSpeedModifier :
                 walkSpeedModifier) * Time.deltaTime;

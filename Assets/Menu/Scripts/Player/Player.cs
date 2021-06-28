@@ -10,10 +10,14 @@ namespace cleon
         [Header("Setup")]
         [SerializeField] GameObject playerStatsUI;
         [SerializeField] GameObject mainCamera;
+        [SerializeField] GameObject dieMenu;
         [SerializeField] GameObject customisationCamera;
         [SerializeField] GameObject player;
+        [SerializeField] GameObject spawnPlace;
         [HideInInspector] public bool isOpen = false;
         [HideInInspector] public PlayerData playerData = new PlayerData();
+        [HideInInspector] public bool isHealing = false;
+        [HideInInspector] public bool isDead = false;
 
         Equipment equipment;
         GameManager gameManager;
@@ -48,8 +52,8 @@ namespace cleon
         int currentPerceive;
         int currentFascination;
 
-        int attack;
-        int defence;
+        [HideInInspector] public int attack;
+        [HideInInspector] public int defence;
         [HideInInspector] public int walkSpeed;
         int health;
         int mana;
@@ -62,9 +66,9 @@ namespace cleon
         int hit;
         int toughness;
         [HideInInspector] public int jumpspeed;
-        int healthRegen;
-        int manaRegen;
-        int staminaRegen;
+        [HideInInspector] public int healthRegen;
+        [HideInInspector] public int manaRegen;
+        [HideInInspector] public int staminaRegen;
 
         float timer;
 
@@ -98,6 +102,7 @@ namespace cleon
         [SerializeField] Text currentHealthText;
         [SerializeField] Text currentManaText;
         [SerializeField] Text currentStaminaText;
+        [SerializeField] Text spawnText;
 
         private void Start()
         {
@@ -129,6 +134,22 @@ namespace cleon
                     customisationCamera.SetActive(false);
                     isOpen = false;
                 }
+            }
+
+            if(currentStamina < 0)
+            {
+                currentStamina = 0;
+            }
+
+            if (currentHealth <= 0 && !isDead)
+            {
+                gameManager.sFXMusicManager.PlayDeadMusic();
+                isDead = true;
+                player.transform.Rotate(-90, 0, 0);
+                player.transform.position = new Vector3(player.transform.position.x, .3f, player.transform.position.z);
+                dieMenu.SetActive(true);
+
+                StartCoroutine(PlayerDieAndRespawn());
             }
 
             // Set the text for race and pro
@@ -176,9 +197,12 @@ namespace cleon
             hit = GetHit();
             toughness = GetToughness();
             jumpspeed = GetJumpSpeed();
-            healthRegen = GetHealthRegen();
-            manaRegen = GetManaRegen();
-            staminaRegen = GetStaminaRegen();
+            if (!isDead && !isHealing)
+            {
+                healthRegen = GetHealthRegen();
+                manaRegen = GetManaRegen();
+                staminaRegen = GetStaminaRegen();
+            }
 
             UpdateText();
         }
@@ -415,6 +439,12 @@ namespace cleon
                 healthBar.value = (float)currentHealth / (float)health;
                 currentHealthText.text = "Health: (" + currentHealth + "/" + health + ")";
             }
+            else
+            {
+                currentHealth = health;
+                healthBar.value = (float)currentHealth / (float)health;
+                currentHealthText.text = "Health: (" + currentHealth + "/" + health + ")";
+            }
         }
 
         void GetCurrentMana()
@@ -426,6 +456,12 @@ namespace cleon
                 manaBar.value = (float)currentMana / (float)mana;
                 currentManaText.text = "Mana: (" + currentMana + "/" + mana + ")";
             }
+            else
+            {
+                currentMana = mana;
+                manaBar.value = (float)currentMana / (float)mana;
+                currentManaText.text = "Mana: (" + currentMana + "/" + mana + ")";
+            }
         }
 
         void GetCurrentStamina()
@@ -434,6 +470,12 @@ namespace cleon
             if (currentStamina <= stamina)
             {
                 currentStamina += staminaRegen;
+                staminaBar.value = (float)currentStamina / (float)stamina;
+                currentStaminaText.text = "Stamina: (" + currentStamina + "/" + stamina + ")";
+            }
+            else
+            {
+                currentStamina = stamina;
                 staminaBar.value = (float)currentStamina / (float)stamina;
                 currentStaminaText.text = "Stamina: (" + currentStamina + "/" + stamina + ")";
             }
@@ -812,6 +854,28 @@ namespace cleon
             fascination += playerData.wizard.fascination;
             isWizard = true;
             SetDefaultPoint();
+        }
+
+        IEnumerator PlayerDieAndRespawn()
+        {
+            for (int i = (5 + level); i < (6 + level); i--)
+            {
+                if (i == 0)
+                {
+                    player.transform.Rotate(0, 0, 0);
+                    player.transform.position = new Vector3(spawnPlace.transform.position.x, 1f, spawnPlace.transform.position.z);
+                    dieMenu.SetActive(false);
+                    if(currentHealth <= 0)
+                    {
+                        currentHealth = 10;
+                    }
+                    isDead = false;
+                    gameManager.sFXMusicManager.PlaySpawnMusic();
+                    yield break;
+                }
+                spawnText.text = "Respawn in " + i + " second";
+                yield return new WaitForSecondsRealtime(1);
+            }
         }
     }
 }
